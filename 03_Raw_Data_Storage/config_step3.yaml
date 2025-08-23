@@ -1,0 +1,12 @@
+# config_step3.yaml
+
+# Relative path to Step 2 configuration file
+step2_config_path: "../02_Data_Ingestion/config.yaml"
+
+# Step 3: Raw Data Storage settings
+raw_data_storage:
+  # Root folder for local data lake storage inside Step 3 folder
+  datalake_root: "./datalake"
+
+  # Log directory for Step 3
+  log_dir: "./logs"

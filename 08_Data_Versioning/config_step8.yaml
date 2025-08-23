@@ -1,0 +1,31 @@
+version_control:
+  git:
+    repository_path: "../"                # Root git repo is project root (parent folder)
+    remote_url: "https://github.com/VarekarAkshay/ml-pipeline-data-versions.git"
+    user_name: "VarekarAkshay"
+    user_email: "varekarakshay5@gmail.com"
+    main_branch: "main"
+    auto_commit: true
+
+data_sources:
+  raw_data_ingestion:
+    path: "../02_Data_Ingestion/raw_data"
+    patterns: ["*.csv", "*.json", "*.parquet"]
+  raw_data_storage:
+    path: "../03_Raw_Data_Storage/datalake"
+    patterns: ["*.csv", "*.json", "*.parquet", "*.db"]
+  data_transformation_storage:
+    path: "../06_Data_Transformation_Storage/datawarehouse"
+    patterns: ["*.db", "*.csv"]
+  feature_store:
+    path: "../07_Feature_Store/feature_store"
+    patterns: ["*.db", "*.sqlite"]
+
+metadata:
+  metadata_dir: "./08_Data_Versioning/metadata"
+  storage_format: "json"
+
+output:
+  logs_dir: "./08_Data_Versioning/logs"
+
+

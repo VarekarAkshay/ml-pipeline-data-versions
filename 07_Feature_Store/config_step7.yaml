@@ -1,0 +1,294 @@
+# Step 7: Feature Store Configuration
+
+# Input sources from Step 6 (paths relative to 07_Feature_Store directory)
+input_sources:
+  # Step 6 data warehouse connection
+  step6_datawarehouse: "../06_Data_Transformation_Storage/datawarehouse/customer_data_warehouse.db"
+  # Step 6 reports directory
+  step6_reports: "../06_Data_Transformation_Storage/reports"
+  # Feature metadata source (auto-detect latest or specify file)
+  feature_metadata_source: "latest"
+  # Step 6 transformation metadata for lineage
+  step6_metadata_pattern: "feature_engineering_summary_*.json"
+
+# Feature store configuration
+feature_store:
+  # SQLite database path for feature store
+  database_path: "feature_store/feature_store.db"
+  # Feature metadata JSON storage
+  metadata_path: "metadata/feature_metadata.json"
+  # Enable feature caching for performance
+  cache_enabled: true
+  cache_path: "cache/"
+  # Enable backups
+  backup_enabled: true
+  backup_path: "feature_store/backups/"
+  # Database connection pool size
+  connection_pool_size: 10
+
+# Feature serving configuration
+serving:
+  # Enable online feature serving (low latency)
+  online_store_enabled: true
+  # Enable offline feature serving (batch/training)
+  offline_store_enabled: true
+  # Enable REST API server
+  api_enabled: true
+  # API server configuration
+  api_host: "localhost"
+  api_port: 8000
+  # Feature cache settings
+  max_cache_size: 1000
+  feature_ttl_hours: 24
+  # Request timeout settings
+  request_timeout_seconds: 30
+  # Enable API documentation
+  enable_api_docs: true
+
+# Feature definitions and metadata
+features:
+  # Customer demographic feature group
+  customer_demographics:
+    description: "Customer demographic and profile features"
+    source_table: "dim_customers"
+    features:
+      - name: "customer_id"
+        type: "integer"
+        description: "Unique customer identifier"
+        source_column: "customer_id"
+        version: "1.0"
+        is_primary_key: true
+      - name: "age_mean"
+        type: "float" 
+        description: "Average customer age"
+        source_column: "age"
+        version: "1.0"
+        tags: ["demographic", "age"]
+      - name: "geography_mode"
+        type: "string"
+        description: "Most common customer geography"
+        source_column: "geography"
+        version: "1.0"
+        tags: ["demographic", "location"]
+        categories: ["France", "Germany", "Spain"]
+      - name: "gender_mode"
+        type: "string"
+        description: "Customer gender"
+        source_column: "gender"
+        version: "1.0"
+        tags: ["demographic", "gender"]
+        categories: ["Male", "Female"]
+      - name: "age_group"
+        type: "string"
+        description: "Customer age category"
+        source_column: "age_group"
+        version: "1.0"
+        tags: ["demographic", "category"]
+        categories: ["Young", "Middle-aged", "Senior", "Elderly"]
+
+  # Customer financial feature group
+  customer_financial:
+    description: "Customer financial and account features"
+    source_table: "fact_customer_features"
+    features:
+      - name: "balance_mean"
+        type: "float"
+        description: "Average account balance"
+        source_column: "balance_mean"
+        version: "1.0"
+        tags: ["financial", "balance"]
+        validation:
+          min_value: 0.0
+          max_value: 1000000.0
+      - name: "balance_sum" 
+        type: "float"
+        description: "Total account balance"
+        source_column: "balance_sum"
+        version: "1.0"
+        tags: ["financial", "balance", "aggregate"]
+      - name: "balance_std"
+        type: "float"
+        description: "Standard deviation of balance"
+        source_column: "balance_std"
+        version: "1.0"
+        tags: ["financial", "balance", "variability"]
+      - name: "credit_score_mean"
+        type: "float"
+        description: "Average credit score"
+        source_column: "credit_score_mean"
+        version: "1.0"
+        tags: ["financial", "credit"]
+        validation:
+          min_value: 300.0
+          max_value: 850.0
+      - name: "estimated_salary_mean"
+        type: "float"
+        description: "Average estimated salary"
+        source_column: "estimated_salary_mean"
+        version: "1.0"
+        tags: ["financial", "salary"]
+        validation:
+          min_value: 0.0
+          max_value: 500000.0
+
+  # Customer derived feature group  
+  customer_derived:
+    description: "Derived and engineered customer features"
+    source_table: "fact_customer_features"
+    features:
+      - name: "balance_to_salary_ratio"
+        type: "float"
+        description: "Balance as proportion of estimated salary"
+        source_column: "balance_to_salary_ratio"
+        version: "1.0"
+        tags: ["derived", "ratio", "financial"]
+        validation:
+          min_value: 0.0
+          max_value: 10.0
+      - name: "high_value_customer"
+        type: "boolean"
+        description: "High value customer flag (top 25% by balance)"
+        source_column: "high_value_customer"
+        version: "1.0"
+        tags: ["derived", "flag", "segmentation"]
+      - name: "geographic_risk_score"
+        type: "float"
+        description: "Risk score based on geographic location"
+        source_column: "geographic_risk_score"
+        version: "1.0"
+        tags: ["derived", "risk", "geographic"]
+        validation:
+          min_value: 0.0
+          max_value: 5.0
+      - name: "credit_score_category"
+        type: "string"
+        description: "Categorical credit score ranges"
+        source_column: "credit_score_category"
+        version: "1.0"
+        tags: ["derived", "category", "credit"]
+        categories: ["Poor", "Fair", "Good", "Very Good", "Excellent"]
+
+# Feature ingestion configuration
+ingestion:
+  # Automatic ingestion from Step 6
+  auto_ingestion_enabled: true
+  # Ingestion schedule (cron format)
+  schedule: "0 */6 * * *"  # Every 6 hours
+  # Batch size for ingestion
+  batch_size: 1000
+  # Enable incremental updates
+  incremental_updates: true
+  # Conflict resolution strategy
+  conflict_resolution: "latest_wins"  # latest_wins, version_increment
+  # Data validation during ingestion
+  validate_on_ingestion: true
+
+# Feature versioning configuration
+versioning:
+  # Enable automatic versioning
+  auto_versioning: true
+  # Version format (semantic, timestamp, incremental)
+  version_format: "semantic"  # 1.0, 1.1, 2.0
+  # Retention policy for old versions
+  retain_versions: 5
+  # Enable feature deprecation
+  enable_deprecation: true
+  deprecation_warning_days: 30
+
+# Data validation and quality
+validation:
+  # Enable data quality monitoring
+  quality_monitoring_enabled: true
+  # Quality thresholds
+  quality_thresholds:
+    completeness_min: 0.95  # 95% non-null
+    validity_min: 0.90      # 90% valid values
+    consistency_min: 0.85   # 85% consistent
+  # Validation rules
+  validation_rules:
+    # Check for outliers (z-score > 3)
+    outlier_detection: true
+    outlier_threshold: 3.0
+    # Check for data drift
+    drift_detection: true
+    drift_threshold: 0.1
+  # Alert configuration
+  alerts:
+    enabled: true
+    email_notifications: false
+    log_alerts: true
+
+# Output configuration
+output:
+  # Reports directory
+  reports_dir: "reports"
+  # Logs directory  
+  logs_dir: "logs"
+  # Enable detailed logging
+  detailed_logging: true
+  # Export formats for feature data
+  export_formats: ["json", "csv", "parquet"]
+  # Generate feature documentation
+  generate_docs: true
+  docs_format: "markdown"
+
+# Performance and optimization
+performance:
+  # Enable query optimization
+  query_optimization: true
+  # Database index creation
+  auto_create_indexes: true
+  # Connection pooling
+  connection_pooling: true
+  # Query result caching
+  query_caching: true
+  cache_ttl_minutes: 60
+  # Parallel processing
+  parallel_workers: 4
+
+# Security and access control
+security:
+  # Enable API authentication
+  api_authentication: false  # Set to true in production
+  # API key configuration (when auth enabled)
+  api_key_header: "X-API-Key"
+  # Rate limiting
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 100
+  # CORS configuration
+  cors:
+    enabled: true
+    allow_origins: ["*"]  # Restrict in production
+    allow_methods: ["GET", "POST"]
+
+# Integration settings
+integration:
+  # Upstream Step 6 integration
+  upstream:
+    step6_required: true
+    validate_step6_outputs: true
+    step6_health_check: true
+  # Downstream preparation for Step 8/9
+  downstream:
+    prepare_for_step8: true
+    prepare_for_step9: true
+    export_feature_schemas: true
+    
+# Monitoring and observability
+monitoring:
+  # Enable metrics collection
+  metrics_enabled: true
+  # Metrics collection interval (seconds)
+  metrics_interval: 60
+  # Health check configuration
+  health_checks:
+    enabled: true
+    interval_seconds: 30
+    timeout_seconds: 10
+  # Log configuration
+  logging:
+    level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+    format: "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+    max_log_files: 10
+    max_log_size_mb: 100
