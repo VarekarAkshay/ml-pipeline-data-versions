@@ -38,7 +38,7 @@ This step focuses on storing the ingested raw data in a structured data lake usi
    This is the top-level folder containing all step folders like `02_Data_Ingestion` and `03_Raw_Data_Storage`.
 
 3. **Run the raw data storage script with the following command from root directory:**
-    python ./03_Raw_Data_Storage/scripts/store_raw_data.py
+    python ./03_Raw_Data_Storage/scripts/upload_raw_data.py
 
 
 4. **What happens during execution:**
